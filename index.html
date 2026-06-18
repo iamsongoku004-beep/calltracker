@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Call Quality Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <base target="_blank">
+</head>
+<body>
+
+  <!-- Background Effects -->
+  <div class="bg-noise"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+  <div class="bg-orb orb-4"></div>
+  <div class="particles" id="particles"></div>
+  <div class="app-glow" id="appGlow"></div>
+  <div class="confetti-container" id="confettiContainer"></div>
+
+  <!-- Floating Shapes for Login -->
+  <div class="floating-shapes" id="floatingShapes"></div>
+
+  <!-- Name Entry Overlay -->
+  <div class="name-overlay" id="nameOverlay">
+    <div class="name-particles" id="nameParticles"></div>
+    <div class="name-card glass">
+      <div class="name-card-shine"></div>
+      <div class="name-brand">Call Tracker</div>
+      <div class="name-subtitle">Real-time quality tracking for your team</div>
+
+      <div class="name-input-group">
+        <label for="userNameInput">Your Name</label>
+        <div class="input-glass-wrapper">
+          <input type="text" id="userNameInput" class="name-input glass-input" placeholder="Enter your name" autocomplete="off" maxlength="20">
+          <div class="input-glow"></div>
+        </div>
+      </div>
+
+      <div class="name-input-group">
+        <label for="teamIdInput">Team ID (shared with your team)</label>
+        <div class="input-glass-wrapper">
+          <input type="text" id="teamIdInput" class="name-input glass-input" placeholder="e.g. team-alpha" autocomplete="off" maxlength="30">
+          <div class="input-glow"></div>
+        </div>
+      </div>
+
+      <div class="name-input-group">
+        <label for="githubTokenInput">GitHub Token (optional - for team sync)</label>
+        <div class="input-glass-wrapper">
+          <input type="password" id="githubTokenInput" class="name-input glass-input" placeholder="Paste your GitHub token here" autocomplete="off" maxlength="100">
+          <div class="input-glow"></div>
+        </div>
+      </div>
+
+      <button class="name-btn glass-btn" id="joinBtn" onclick="joinTeam()">
+        <span class="btn-text">&#128640; Join Team</span>
+        <span class="btn-shine"></span>
+      </button>
+      <div class="name-error-msg" id="nameError"></div>
+
+    </div>
+  </div>
+
+  <!-- Sync Status + Retry -->
+  <div class="sync-status glass" id="syncStatus">
+    <span class="sync-dot" id="syncDot"></span>
+    <span class="sync-text" id="syncText">Ready</span>
+    <button class="sync-retry glass-icon-btn" id="syncRetry" onclick="retrySync()" title="Retry connection">&#128260;</button>
+  </div>
+
+  <!-- Glass Toggle -->
+  <button class="glass-toggle" id="glassToggle" onclick="toggleGlassMode()" title="Toggle Glassmorphism">&#127754;</button>
+
+  <!-- Main App -->
+  <div class="app" id="app" style="display:none;">
+
+    <!-- Header -->
+    <header class="header glass-header">
+      <div class="header-badge" id="liveBadge">&#9679; Live</div>
+      <h1>Call Quality Tracker</h1>
+      <p id="teamDisplay">Team: <span>--</span> | You: <span>--</span></p>
+    </header>
+
+    <!-- TOP ROW: Tracker + Controls -->
+    <div class="top-row">
+      <!-- LEFT: My Tracker -->
+      <div class="left-col">
+        <div class="section-title">&#128202; My Tracker</div>
+
+        <div class="score-ring-section glass-card">
+          <div class="score-ring-wrapper">
+            <svg class="score-ring-svg" id="scoreRingSvg" viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:var(--accent-blue);stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:var(--accent-cyan);stop-opacity:1" />
+                </linearGradient>
+                <filter id="ringGlow">
+                  <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <circle class="score-ring-bg" cx="100" cy="100" r="82"></circle>
+              <circle class="score-ring-fill" id="scoreRingFill" cx="100" cy="100" r="82"
+                stroke-dasharray="515.22" stroke-dashoffset="515.22" stroke="url(#ringGrad)"></circle>
+            </svg>
+            <div class="score-ring-text">
+              <div class="score-ring-percentage" id="ringPercentage">0.0%</div>
+              <div class="score-ring-label">Quality Score</div>
+              <div class="score-ring-status" id="ringStatus">START</div>
+            </div>
+            <div class="ring-particles" id="ringParticles"></div>
+          </div>
+        </div>
+
+        <div class="card glass-card">
+          <div class="card-shine"></div>
+          <div class="card-header">
+            <span class="card-title">Target: 85% Pass</span>
+            <div class="card-icon icon-green">&#127919;</div>
+          </div>
+          <div class="target-box" id="targetBox">
+            <div class="target-label">&#128202; To Reach 85% Pass</div>
+            <div class="target-value" id="targetValue">Start tracking</div>
+            <div class="target-detail" id="targetDetail">Enter metrics above to see your progress</div>
+          </div>
+          <div class="progress-track glass-track">
+            <div class="progress-fill" id="progressFill" style="width: 0%; background: var(--accent-blue);"></div>
+          </div>
+        </div>
+
+        <div class="card glass-card">
+          <div class="card-shine"></div>
+          <div class="card-header">
+            <span class="card-title">Quick Summary</span>
+            <div class="card-icon icon-green">&#128203;</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="summary-row glass-row">
+              <span class="summary-label">Pass Rate</span>
+              <span class="summary-value" id="summaryPassRate" style="color: var(--accent-blue);">--</span>
+            </div>
+            <div class="summary-row glass-row">
+              <span class="summary-label">Total Calls</span>
+              <span class="summary-value" id="summaryTotal">0</span>
+            </div>
+            <div class="summary-row glass-row">
+              <span class="summary-label">Drop Rate</span>
+              <span class="summary-value" id="summaryDropRate" style="color: var(--accent-red);">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Live Controls -->
+      <div class="center-col">
+        <div class="section-title">&#9889; Live Controls</div>
+
+        <div class="streak-banner glass-banner" id="streakBanner">
+          <span class="streak-icon">&#128293;</span>
+          <div class="streak-text">
+            <span class="streak-count" id="streakCount">0</span>
+            <span class="streak-label"> releases in a row without a drop</span>
+          </div>
+        </div>
+
+        <div class="card glass-card">
+          <div class="card-shine"></div>
+          <div class="card-header">
+            <span class="card-title">Live Stats</span>
+            <div class="card-icon icon-cyan">&#9889;</div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item glass-stat" onclick="updateStatsValue('release', 1); burstParticles(event, 'green')" title="Click to +1 Release">
+              <div class="stat-label">RELEASE</div>
+              <div class="stat-value" id="release-stats">0</div>
+              <div class="stat-controls">
+                <button class="stat-btn minus glass-btn-sm" onclick="event.stopPropagation(); updateStatsValue('release', -1)">&#8722;</button>
+                <button class="stat-btn plus release glass-btn-sm" onclick="event.stopPropagation(); updateStatsValue('release', 1); burstParticles(event, 'green')">+</button>
+              </div>
+            </div>
+            <div class="stat-item glass-stat" onclick="updateStatsValue('drop', 1); burstParticles(event, 'red')" title="Click to +1 Drop">
+              <div class="stat-label">DROP</div>
+              <div class="stat-value" id="drop-stats">0</div>
+              <div class="stat-controls">
+                <button class="stat-btn minus glass-btn-sm" onclick="event.stopPropagation(); updateStatsValue('drop', -1)">&#8722;</button>
+                <button class="stat-btn plus drop glass-btn-sm" onclick="event.stopPropagation(); updateStatsValue('drop', 1); burstParticles(event, 'red')">+</button>
+              </div>
+            </div>
+            <div class="stat-item glass-stat" onclick="updateStatsValue('calls', 1); burstParticles(event, 'purple')" title="Click to +1 Call">
+              <div class="stat-label">CALLS</div>
+              <div class="stat-value" id="calls-stats">0</div>
+              <div class="stat-controls">
+                <button class="stat-btn minus glass-btn-sm" onclick="event.stopPropagation(); updateStatsValue('calls', -1)">&#8722;</button>
+                <button class="stat-btn plus calls glass-btn-sm" onclick="event.stopPropagation(); updateStatsValue('calls', 1); burstParticles(event, 'purple')">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass-card">
+          <div class="card-shine"></div>
+          <div class="card-header">
+            <span class="card-title">Reverse Calculator</span>
+            <div class="card-icon icon-purple">&#128302;</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Current Percentage</label>
+            <div class="input-glass-wrapper">
+              <span class="input-icon">&#128200;</span>
+              <input type="number" id="currentPct" class="input-field glass-input" placeholder="e.g. 75" min="0" max="100" step="0.1">
+              <span class="input-suffix">%</span>
+              <span class="auto-badge">auto</span>
+              <div class="input-glow"></div>
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Calls Handled</label>
+            <div class="input-glass-wrapper">
+              <span class="input-icon">&#128222;</span>
+              <input type="number" id="callsHandled" class="input-field glass-input" placeholder="e.g. 100" min="0" step="1">
+              <span class="input-suffix">calls</span>
+              <span class="auto-badge">auto</span>
+              <div class="input-glow"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass-card">
+          <div class="card-shine"></div>
+          <div class="card-header">
+            <span class="card-title">Daily Goal / Shift Target</span>
+            <div class="card-icon icon-blue">&#127942;</div>
+          </div>
+          <div class="daily-goal-section">
+            <div class="goal-input-group">
+              <label class="input-label" style="margin-bottom:0;">Goal</label>
+              <div class="input-glass-wrapper">
+                <input type="number" id="dailyGoalInput" class="input-field glass-input" placeholder="e.g. 50" min="1" step="1" value="50" style="padding-left:14px;">
+                <span class="input-suffix" style="right:14px;">calls</span>
+                <div class="input-glow"></div>
+              </div>
+            </div>
+            <div class="goal-progress-wrapper">
+              <div class="goal-progress-label">
+                <span id="goalProgressText">0 / 50 calls</span>
+                <span id="goalPercentText">0%</span>
+              </div>
+              <div class="goal-progress-track glass-track">
+                <div class="goal-progress-fill" id="goalProgressFill" style="width: 0%; background: var(--accent-blue);"></div>
+              </div>
+              <div class="goal-milestones" id="goalMilestones">
+                <span class="goal-milestone" data-pct="25">25%</span>
+                <span class="goal-milestone" data-pct="50">50%</span>
+                <span class="goal-milestone" data-pct="75">75%</span>
+                <span class="goal-milestone" data-pct="100">100%</span>
+              </div>
+            </div>
+            <div class="shift-goal-badge hidden glass-badge" id="shiftGoalBadge">&#127919; Shift Goal Reached!</div>
+          </div>
+        </div>
+
+        <button class="reset-btn glass-btn-danger" onclick="resetAll()">
+          <span>&#128260; Reset All</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TEAM DASHBOARD PANEL -->
+    <div class="dashboard-panel active" id="teamPanel">
+      <div class="dashboard-row">
+        <div class="section-title">&#128101; Team Dashboard</div>
+
+        <!-- Team Stats Summary Bar -->
+        <div class="team-stats-bar" id="teamStatsBar">
+          <div class="team-stat-box glass-stat-box">
+            <div class="team-stat-label">Members</div>
+            <div class="team-stat-value" id="teamMemberCount">0</div>
+          </div>
+          <div class="team-stat-box glass-stat-box highlight">
+            <div class="team-stat-label">Team Avg Score</div>
+            <div class="team-stat-value" id="teamAvgScore">--</div>
+          </div>
+          <div class="team-stat-box glass-stat-box">
+            <div class="team-stat-label">Total Calls</div>
+            <div class="team-stat-value" id="teamTotalCalls">0</div>
+          </div>
+          <div class="team-stat-box glass-stat-box">
+            <div class="team-stat-label">Total Releases</div>
+            <div class="team-stat-value" id="teamTotalReleases">0</div>
+          </div>
+          <div class="team-stat-box glass-stat-box">
+            <div class="team-stat-label">Total Drops</div>
+            <div class="team-stat-value" id="teamTotalDrops">0</div>
+          </div>
+          <div class="team-stat-box glass-stat-box highlight">
+            <div class="team-stat-label">Releases to 85%</div>
+            <div class="team-stat-value" id="teamReleasesNeeded">--</div>
+          </div>
+        </div>
+
+        <!-- Team Progress Table -->
+        <div class="card glass-card dashboard-card">
+          <div class="card-shine"></div>
+          <div class="team-table-header glass-header-row">
+            <span class="th-rank">#</span>
+            <span class="th-member">Member</span>
+            <span class="th-score">Score</span>
+            <span class="th-bar"></span>
+            <span class="th-releases">Rel</span>
+            <span class="th-drops">Drp</span>
+            <span class="th-calls">Calls</span>
+            <span class="th-status">Status</span>
+            <span class="th-activity"></span>
+          </div>
+          <div class="team-list-full" id="teamList">
+            <div class="team-empty">Loading team data...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WE ARE QUALITY PANEL -->
+    <div class="dashboard-panel" id="qualityPanel">
+      <div class="quality-iframe-wrapper glass-frame">
+        <iframe 
+          src="https://iamsongoku004-beep.github.io/" 
+          class="quality-iframe"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          loading="lazy"
+          title="We Are Quality"
+        ></iframe>
+      </div>
+    </div>
+
+    <!-- Member Detail Overlay -->
+    <div class="member-detail-overlay" id="memberDetailOverlay" onclick="closeMemberDetail(event)">
+      <div class="member-detail-card glass" onclick="event.stopPropagation()">
+        <div class="card-shine"></div>
+        <button class="member-detail-close glass-icon-btn" onclick="closeMemberDetail()">&times;</button>
+        <div class="member-detail-header">
+          <div class="member-detail-avatar" id="detailAvatar">A</div>
+          <div class="member-detail-info">
+            <div class="member-detail-name" id="detailName">Member Name</div>
+            <div class="member-detail-rank" id="detailRank">Rank #1</div>
+          </div>
+          <div class="member-detail-score" id="detailScore">85.0%</div>
+        </div>
+        <div class="member-detail-body">
+          <div class="detail-grid">
+            <div class="detail-stat glass-stat-mini">
+              <div class="detail-stat-label">Releases</div>
+              <div class="detail-stat-value" id="detailReleases">0</div>
+            </div>
+            <div class="detail-stat glass-stat-mini">
+              <div class="detail-stat-label">Drops</div>
+              <div class="detail-stat-value" id="detailDrops">0</div>
+            </div>
+            <div class="detail-stat glass-stat-mini">
+              <div class="detail-stat-label">Total Calls</div>
+              <div class="detail-stat-value" id="detailCalls">0</div>
+            </div>
+            <div class="detail-stat glass-stat-mini">
+              <div class="detail-stat-label">Streak</div>
+              <div class="detail-stat-value" id="detailStreak">0</div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#128200; Progress to 85%</div>
+            <div class="detail-progress-track glass-track">
+              <div class="detail-progress-fill" id="detailProgressFill" style="width: 0%"></div>
+            </div>
+            <div class="detail-progress-labels">
+              <span id="detailProgressText">0 / 0 calls</span>
+              <span id="detailProgressPct">0%</span>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#127919; Target Analysis</div>
+            <div class="detail-target-box" id="detailTargetBox">
+              <div class="detail-target-value" id="detailTargetValue">--</div>
+              <div class="detail-target-detail" id="detailTargetDetail">--</div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#128293; Current Streak</div>
+            <div class="detail-streak-row glass-streak">
+              <span class="detail-streak-icon">&#128293;</span>
+              <span class="detail-streak-count" id="detailStreakCount">0</span>
+              <span class="detail-streak-label">releases without a drop</span>
+            </div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">&#9200; Last Active</div>
+            <div class="detail-last-active" id="detailLastActive">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
