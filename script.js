@@ -175,7 +175,7 @@ function animateNumber(element, newValue) {
 function updateProgressBar(percentage) {
   const pct = Math.min(Math.max(percentage || 0, 0), 100);
   progressFill.style.width = pct + '%';
-  progressFill.style.background = pct >= 75 ? 'var(--accent-green)' : pct >= 70 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+  progressFill.style.background = pct >= 85 ? 'var(--accent-green)' : pct >= 80 ? 'var(--accent-yellow)' : 'var(--accent-red)';
 }
 
 // ===== STREAK TRACKING =====
@@ -217,7 +217,7 @@ function calculateTarget(drop, release, currentPercentage) {
     targetBox.className = 'target-box';
     targetValue.textContent = 'Start tracking';
     targetValue.style.color = '';
-    targetDetail.textContent = 'Enter metrics above to see your progress toward 75%';
+    targetDetail.textContent = 'Enter metrics above to see your progress toward 85%';
     return;
   }
 
@@ -291,8 +291,8 @@ function render() {
 
   let status = 'start';
   if (d === 0 && r === 0) status = 'start';
-  else if (percentage >= 75) status = 'pass';
-  else if (percentage >= 70) status = 'warning';
+  else if (percentage >= 85) status = 'pass';
+  else if (percentage >= 80) status = 'warning';
   else status = 'fail';
 
   updateRing(percentage, status);
@@ -577,8 +577,8 @@ function renderNps() {
 
   let status = 'start';
   if (total === 0) status = 'start';
-  else if (percentage >= 75) status = 'pass';
-  else if (percentage >= 70) status = 'warning';
+  else if (percentage >= 85) status = 'pass';
+  else if (percentage >= 80) status = 'warning';
   else status = 'fail';
 
   updateNpsRing(percentage, status);
